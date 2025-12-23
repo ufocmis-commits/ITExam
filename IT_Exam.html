@@ -531,7 +531,7 @@ END LOOP</code></pre>
         }
     });
 
-    sqlEditor.setValue("-- 請查詢 2024 VIP 客戶 (需符合購買產品種類 >= 2)\n");
+    sqlEditor.setValue("");
 
     sqlEditor.on("keyup", function (cm, event) {
         if (!cm.state.completionActive && event.keyCode > 64 && event.keyCode < 91) {
@@ -658,4 +658,5 @@ END LOOP</code></pre>
 
 </body>
 </html>
+
 
