@@ -611,7 +611,8 @@ END LOOP</code></pre>
         if (sqlAnswerRaw.length > 20) {
             if (hitCount >= 6) sqlScore = 20; // 標準變高了
             else if (hitCount >= 4) sqlScore = 10;
-            else sqlScore = 5;
+            else if (hitCount >= 2) sqlScore = 5;
+            else sqlScore = 0;
         }
         score += sqlScore;
         const finalScore = Math.round(score);
@@ -657,3 +658,4 @@ END LOOP</code></pre>
 
 </body>
 </html>
+
