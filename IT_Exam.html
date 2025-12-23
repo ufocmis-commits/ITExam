@@ -18,6 +18,8 @@
             --bg-light: #f4f7f6;
             --text-dark: #333;
             --card-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            --table-border: #ddd;
+            --table-header: #f2f2f2;
         }
 
         body {
@@ -30,13 +32,13 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px; /* 加寬一點以容納表格 */
             margin: 0 auto;
             background-color: #fff;
             padding: 30px;
             border-radius: 12px;
             box-shadow: var(--card-shadow);
-            min-height: 400px; /* 保持最小高度以免畫面跳動太大 */
+            min-height: 400px; 
         }
 
         h1 {
@@ -121,40 +123,69 @@
         .options input:checked + span { font-weight: bold; color: var(--primary-color); }
         .options input:checked + span::before { content: "✔ "; }
 
-        /* SQL Table Schema 樣式 */
-        .db-schema {
-            display: flex;
-            flex-wrap: wrap;
+        /* --- 新增：資料表視覺化樣式 --- */
+        .db-tables-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
+            font-size: 0.85rem;
         }
-        .table-def {
-            border: 1px solid #ccc;
+
+        .table-wrapper {
+            border: 1px solid var(--table-border);
             border-radius: 6px;
-            padding: 10px;
-            background: #fdfdfd;
-            min-width: 150px;
-            flex: 1;
+            overflow: hidden;
         }
-        .table-name {
+
+        .table-caption {
+            background-color: #34495e;
+            color: #fff;
+            padding: 5px 10px;
             font-weight: bold;
-            border-bottom: 2px solid #3498db;
-            margin-bottom: 5px;
-            padding-bottom: 3px;
-            color: #2c3e50;
+            font-size: 0.9rem;
+            border-bottom: 2px solid #2c3e50;
         }
-        .column-list {
-            font-size: 0.9em;
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid #eee;
+            padding: 4px 8px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
             color: #555;
-            list-style: none;
-            padding: 0;
-            margin: 0;
         }
-        .column-list li::before { content: "• "; color: #999; }
+
+        .data-table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        /* 預期結果樣式 */
+        .expected-result-box {
+            background-color: #e8f6f3;
+            border: 1px solid #a2d9ce;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .expected-result-box h4 {
+            margin-top: 0;
+            color: #16a085;
+            margin-bottom: 10px;
+        }
+        /* -------------------------- */
 
         /* CodeMirror 編輯器客製化 */
         .CodeMirror {
-            height: 300px;
+            height: 350px;
             border-radius: 6px;
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 15px;
@@ -196,9 +227,8 @@
             color: var(--primary-color);
         }
 
-        /* 新增：完成畫面樣式 */
         #result-view {
-            display: none; /* 預設隱藏 */
+            display: none;
             text-align: center;
             padding: 40px;
         }
@@ -342,46 +372,106 @@ END LOOP</code></pre>
             </div>
 
             <div class="question-card" data-id="q5">
-                <h3 class="question-title">5. SQL 語法撰寫實戰 <span class="badge" style="background-color:#8e44ad">手寫題</span></h3>
+                <h3 class="question-title">5. SQL 語法撰寫實戰 <span class="badge" style="background-color:#c0392b">手寫題</span></h3>
+                
                 <div class="question-text">
-                    請根據下方提供的資料表結構，撰寫一段 SQL 查詢。<br>
-                    <strong>需求：</strong>查詢 2024 年度的訂單中，消費總金額最高的前 3 名客戶。<br>
-                    <strong>顯示欄位：</strong> `CustomerName` (客戶名稱), `TotalSpent` (該客戶 2024 年總消費金額)。
+                    <p>請參考下方的資料表與範例資料，撰寫 SQL 查詢 2024 年度的「VIP 客戶」。</p>
+                    <p><strong>查詢需求條件：</strong></p>
+                    <ol>
+                        <li>訂單日期 (OrderDate) 必須在 <strong>2024 年</strong>。</li>
+                        <li>該客戶必須在 2024 年購買過 <strong>2 種(含)以上</strong> 不同的產品。</li>
+                        <li>依 <strong>消費總金額 (TotalSpent)</strong> 由高到低排序，取 <strong>前 3 名</strong>。</li>
+                    </ol>
+                    <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:4px; font-size:0.9em; margin-top:10px;">
+                        <strong>⚠️ 注意陷阱：</strong><br>
+                        1. <strong>David</strong> 雖然消費金額最高 ($90,000)，但只買了「高階筆電」1 種產品，不符合資格。<br>
+                        2. <strong>Eve</strong> 雖然消費金額高，但是是 2023 年的訂單，不符合資格。
+                    </div>
                 </div>
 
-                <div class="db-schema">
-                    <div class="table-def">
-                        <div class="table-name">Customers</div>
-                        <ul class="column-list">
-                            <li>CustomerID (PK)</li>
-                            <li>CustomerName</li>
-                            <li>Email</li>
-                        </ul>
+                <div class="db-tables-container">
+                    <div class="table-wrapper">
+                        <div class="table-caption">Customers</div>
+                        <table class="data-table">
+                            <thead><tr><th>ID</th><th>Name</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>Alice</td></tr>
+                                <tr><td>2</td><td>Bob</td></tr>
+                                <tr><td>3</td><td>Charlie</td></tr>
+                                <tr><td>4</td><td>David</td></tr>
+                                <tr><td>5</td><td>Eve</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="table-def">
-                        <div class="table-name">Orders</div>
-                        <ul class="column-list">
-                            <li>OrderID (PK)</li>
-                            <li>CustomerID (FK)</li>
-                            <li>OrderDate</li>
-                        </ul>
+
+                    <div class="table-wrapper">
+                        <div class="table-caption">Products</div>
+                        <table class="data-table">
+                            <thead><tr><th>ID</th><th>Name</th><th>Price</th></tr></thead>
+                            <tbody>
+                                <tr><td>101</td><td>高階筆電</td><td>30,000</td></tr>
+                                <tr><td>102</td><td>無線滑鼠</td><td>1,000</td></tr>
+                                <tr><td>103</td><td>機械鍵盤</td><td>3,000</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="table-def">
-                        <div class="table-name">OrderDetails</div>
-                        <ul class="column-list">
-                            <li>OrderDetailID (PK)</li>
-                            <li>OrderID (FK)</li>
-                            <li>Quantity</li>
-                            <li>UnitPrice</li>
-                        </ul>
+
+                    <div class="table-wrapper">
+                        <div class="table-caption">Orders</div>
+                        <table class="data-table">
+                            <thead><tr><th>ID</th><th>CustID</th><th>Date</th></tr></thead>
+                            <tbody>
+                                <tr><td>1001</td><td>1 (Alice)</td><td>2024/01</td></tr>
+                                <tr><td>1002</td><td>2 (Bob)</td><td>2024/02</td></tr>
+                                <tr><td>1004</td><td>4 (David)</td><td>2024/04</td></tr>
+                                <tr><td>1005</td><td>5 (Eve)</td><td>2023/12</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                     <div class="table-def">
-                        <div class="table-name">Products</div>
-                        <ul class="column-list">
-                            <li>ProductID (PK)</li>
-                            <li>ProductName</li>
-                        </ul>
+
+                    <div class="table-wrapper">
+                        <div class="table-caption">OrderDetails (部分)</div>
+                        <table class="data-table">
+                            <thead><tr><th>OrdID</th><th>ProdID</th><th>Qty</th></tr></thead>
+                            <tbody>
+                                <tr><td>1001</td><td>101 (筆電)</td><td>2</td></tr>
+                                <tr><td>1001</td><td>102 (滑鼠)</td><td>2</td></tr>
+                                <tr><td>1002</td><td>101 (筆電)</td><td>1</td></tr>
+                                <tr><td>1002</td><td>103 (鍵盤)</td><td>1</td></tr>
+                                <tr><td>1004</td><td>101 (筆電)</td><td>3</td></tr>
+                            </tbody>
+                        </table>
                     </div>
+                </div>
+
+                <div class="expected-result-box">
+                    <h4>📊 預期撈取結果 (Result)</h4>
+                    <table class="data-table" style="background:white;">
+                        <thead>
+                            <tr>
+                                <th>CustomerName</th>
+                                <th>TotalSpent (總金額)</th>
+                                <th>AvgOrderValue (平均客單價)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Alice</td>
+                                <td>62000.00</td>
+                                <td>62000.00</td>
+                            </tr>
+                            <tr>
+                                <td>Bob</td>
+                                <td>33000.00</td>
+                                <td>33000.00</td>
+                            </tr>
+                            <tr>
+                                <td>Charlie</td>
+                                <td>5000.00</td>
+                                <td>5000.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <span class="editor-hint">💡 提示：按 <strong>Ctrl + Space</strong> 可觸發 SQL 語法與欄位自動提示 (Autocomplete)</span>
@@ -435,7 +525,7 @@ END LOOP</code></pre>
                 "INNER JOIN": [], "LEFT JOIN": [], "RIGHT JOIN": [],
                 "GROUP BY": [], "ORDER BY": [], "HAVING": [],
                 "COUNT(*)": [], "SUM()": [], "DISTINCT": [],
-                "TOP": [], "AS": [], "ON": [],
+                "TOP": [], "AS": [], "ON": [], "AVG": [],
 
                 // --- 2. 真實的資料表結構 ---
                 "Customers": ["CustomerID", "CustomerName", "Email"],
@@ -446,7 +536,7 @@ END LOOP</code></pre>
         }
     });
 
-    sqlEditor.setValue("-- 請在此撰寫 SQL\n");
+    sqlEditor.setValue("-- 請查詢 2024 VIP 客戶 (需符合購買產品種類 >= 2)\n");
 
     sqlEditor.on("keyup", function (cm, event) {
         if (!cm.state.completionActive && event.keyCode > 64 && event.keyCode < 91) {
@@ -454,7 +544,7 @@ END LOOP</code></pre>
         }
     });
 
-
+    // 定義選擇題正確答案
     const correctAnswers = {
         q1: 'B',  
         q2: ['A', 'B', 'C', 'D'], 
@@ -517,15 +607,15 @@ END LOOP</code></pre>
         
         const sqlAnswerUpper = sqlAnswerRaw.toUpperCase();
         let sqlScore = 0;
-        const requiredKeywords = ['SELECT', 'FROM', 'JOIN', 'GROUP BY', 'SUM'];
+        const requiredKeywords = ['SELECT', 'FROM', 'JOIN', 'GROUP BY', 'SUM', 'HAVING', 'DISTINCT'];
         let hitCount = 0;
         requiredKeywords.forEach(keyword => {
             if (sqlAnswerUpper.includes(keyword)) hitCount++;
         });
 
         if (sqlAnswerRaw.length > 20) {
-            if (hitCount >= 5) sqlScore = 20;
-            else if (hitCount >= 3) sqlScore = 10;
+            if (hitCount >= 6) sqlScore = 20; // 標準變高了
+            else if (hitCount >= 4) sqlScore = 10;
             else sqlScore = 5;
         }
         score += sqlScore;
@@ -571,5 +661,4 @@ END LOOP</code></pre>
 </script>
 
 </body>
-
 </html>
