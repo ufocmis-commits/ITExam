@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>程式測驗：JS / .NET / SQL</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --bg-light: #f4f7f6;
+            --text-dark: #333;
+            --card-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            min-height: 400px; /* 保持最小高度以免畫面跳動太大 */
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 30px;
+        }
+
+        .user-info {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #eef2f5;
+            border-radius: 8px;
+        }
+
+        .user-info label { font-weight: bold; margin-right: 10px; }
+        .user-info input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; width: 250px; font-size: 16px; }
+
+        .question-card {
+            background-color: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.2s;
+        }
+
+        .question-card:hover { box-shadow: var(--card-shadow); }
+
+        .question-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .badge {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        .question-text { margin-bottom: 15px; }
+
+        /* PrismJS 微調 */
+        pre[class*="language-"] {
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .options label {
+            display: block;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        
+        .options label:hover { background-color: #e9ecef; }
+        
+        .options label pre {
+            margin-top: 10px;
+            margin-bottom: 0;
+            pointer-events: none; 
+        }
+
+        .options input {
+            transform: scale(1.2);
+            margin-right: 10px;
+        }
+        
+        .options input:checked + span { font-weight: bold; color: var(--primary-color); }
+        .options input:checked + span::before { content: "✔ "; }
+
+        /* SQL Table Schema 樣式 */
+        .db-schema {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .table-def {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px;
+            background: #fdfdfd;
+            min-width: 150px;
+            flex: 1;
+        }
+        .table-name {
+            font-weight: bold;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+            color: #2c3e50;
+        }
+        .column-list {
+            font-size: 0.9em;
+            color: #555;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .column-list li::before { content: "• "; color: #999; }
+
+        /* CodeMirror 編輯器客製化 */
+        .CodeMirror {
+            height: 300px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 15px;
+            border: 1px solid #ddd;
+        }
+        .editor-hint {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #666;
+            background: #eee;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover { background-color: #2980b9; }
+        .submit-btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
+
+        #loading-message {
+            text-align: center;
+            display: none;
+            margin-top: 50px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        /* 新增：完成畫面樣式 */
+        #result-view {
+            display: none; /* 預設隱藏 */
+            text-align: center;
+            padding: 40px;
+        }
+        #result-view h2 {
+            color: #27ae60;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        #result-view p {
+            font-size: 1.2rem;
+            color: #555;
+        }
+        .success-icon {
+            font-size: 4rem;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>程式測驗：JS / .NET / SQL</h1>
+    
+    <div id="quiz-content">
+        <div class="user-info">
+            <label for="username">考生姓名：</label>
+            <input type="text" id="username" placeholder="請輸入您的真實姓名" required>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">測驗說明：共 5 題，前 4 題為選擇(含複選)，第 5 題為 SQL 手寫題。</p>
+        </div>
+
+        <form id="quiz-form">
+            <div class="question-card" data-id="q1">
+                <h3 class="question-title">1. JS 綜合執行順序分析</h3>
+                <div class="question-text">請分析以下程式碼的執行順序。假設網路請求 `fetch` 的耗時大於 4ms，正確的 Console 輸出順序為何？</div>
+                <pre><code class="language-javascript">console.log('A');
+
+setTimeout(() => console.log('B'), 0);
+
+// 模擬網路請求
+fetch('https://api.example.com').then(() => console.log('C'));
+
+Promise.resolve().then(() => console.log('D'));
+
+console.log('E');</code></pre>
+                <div class="options">
+                    <label><input type="radio" name="q1" value="A"> <span>A -> E -> D -> C -> B</span></label>
+                    <label><input type="radio" name="q1" value="B"> <span>A -> E -> D -> B -> C</span></label>
+                    <label><input type="radio" name="q1" value="C"> <span>A -> B -> C -> D -> E</span></label>
+                    <label><input type="radio" name="q1" value="D"> <span>A -> D -> E -> B -> C</span></label>
+                </div>
+            </div>
+
+            <div class="question-card" data-id="q2">
+                <h3 class="question-title">2. C# 呼叫 API 的方式 <span class="badge">複選題</span></h3>
+                <div class="question-text">下列哪些是在 C# (.NET) 環境中，呼叫外部 HTTP API 的正確或常見方式？（請選擇所有正確答案）</div>
+                <div class="options">
+                    <label><input type="checkbox" name="q2" value="A"> <span>使用 <code>System.Net.Http.HttpClient</code> 類別</span></label>
+                    <label><input type="checkbox" name="q2" value="B"> <span>使用 <code>System.Net.WebClient</code></span></label>
+                    <label><input type="checkbox" name="q2" value="C"> <span>使用 <code>RestSharp</code></span></label>
+                    <label><input type="checkbox" name="q2" value="D"> <span>使用 <code>IHttpClientFactory</code></span></label>
+                    <label><input type="checkbox" name="q2" value="E"> <span>使用 <code>XMLHttpRequest</code> 物件</span></label>
+                </div>
+            </div>
+
+            <div class="question-card" data-id="q3">
+                <h3 class="question-title">3. SQL 產生連續日期資料 <span class="badge">複選題</span></h3>
+                <div class="question-text">在 SQL Server (T-SQL) 中，若不建立實體日曆表，下列哪些 SQL 語法**可以正確執行並產生**連續日期列表？</div>
+                <div class="options">
+                    <label>
+                        <input type="checkbox" name="q3" value="A"> 
+                        <span>選項 A</span>
+                        <pre><code class="language-sql">WITH DateCTE AS (
+    SELECT CAST('2024-01-01' AS DATE) AS Dt
+    UNION ALL
+    SELECT DATEADD(d, 1, Dt) FROM DateCTE 
+    WHERE Dt < '2024-01-05'
+) 
+SELECT * FROM DateCTE</code></pre>
+                    </label>
+                    
+                    <label>
+                        <input type="checkbox" name="q3" value="B"> 
+                        <span>選項 B</span>
+                        <pre><code class="language-sql">SELECT * FROM SEQUENCE('2024-01-01', '2024-01-05', '1 DAY')</code></pre>
+                    </label>
+                    
+                    <label>
+                        <input type="checkbox" name="q3" value="C"> 
+                        <span>選項 C</span>
+                        <pre><code class="language-sql">SELECT DATEADD(day, number, '2024-01-01')
+FROM master..spt_values
+WHERE type = 'P' AND number <= 4</code></pre>
+                    </label>
+                    
+                    <label>
+                        <input type="checkbox" name="q3" value="D"> 
+                        <span>選項 D</span>
+                        <pre><code class="language-sql">SELECT * FROM RANGE('2024-01-01', '2024-01-05')</code></pre>
+                    </label>
+
+                    <label>
+                        <input type="checkbox" name="q3" value="E"> 
+                        <span>選項 E</span>
+                        <pre><code class="language-sql">FOR i IN 0..4 LOOP
+    SELECT DATEADD(day, i, '2024-01-01')
+END LOOP</code></pre>
+                    </label>
+                </div>
+            </div>
+
+            <div class="question-card" data-id="q4">
+                <h3 class="question-title">4. C# 傳統 ADO.NET 架構 <span class="badge">複選題</span></h3>
+                <div class="question-text">關於 SqlConnection、SqlCommand 與資料讀取機制的敘述，下列哪些是正確的？（請選擇所有正確答案）</div>
+                <div class="options">
+                    <label>
+                        <input type="checkbox" name="q4" value="A"> 
+                        <span>ExecuteScalar() 方法是用來執行 SQL 並回傳「第一列第一欄」的資料，適合用於查詢 Count 或 ID</span>
+                    </label>
+
+                    <label>
+                        <input type="checkbox" name="q4" value="B"> 
+                        <span>預設情況下，ADO.NET 的 Connection Pooling (連線池) 是啟用的，這能大幅提升重複開啟連線的效能</span>
+                    </label>
+
+                    <label>
+                        <input type="checkbox" name="q4" value="C"> 
+                        <span>DataSet 與 DataTable 屬於「離線式 (Disconnected)」架構，資料載入記憶體後即可斷開資料庫連線</span>
+                    </label>
+
+                    <label>
+                        <input type="checkbox" name="q4" value="D"> 
+                        <span>SqlDataReader 是屬於「連線式 (Connected)」架構，讀取資料期間 Connection 必須保持 Open 狀態</span>
+                    </label>
+
+                    <label>
+                        <input type="checkbox" name="q4" value="E"> 
+                        <span>使用 using (SqlConnection conn = ...) 語法區塊，編譯器會自動產生 try-finally 並在結束時呼叫 Dispose() 關閉連線</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="question-card" data-id="q5">
+                <h3 class="question-title">5. SQL 語法撰寫實戰 <span class="badge" style="background-color:#8e44ad">手寫題</span></h3>
+                <div class="question-text">
+                    請根據下方提供的資料表結構，撰寫一段 SQL 查詢。<br>
+                    <strong>需求：</strong>查詢 2024 年度的訂單中，消費總金額最高的前 3 名客戶。<br>
+                    <strong>顯示欄位：</strong> `CustomerName` (客戶名稱), `TotalSpent` (該客戶 2024 年總消費金額)。
+                </div>
+
+                <div class="db-schema">
+                    <div class="table-def">
+                        <div class="table-name">Customers</div>
+                        <ul class="column-list">
+                            <li>CustomerID (PK)</li>
+                            <li>CustomerName</li>
+                            <li>Email</li>
+                        </ul>
+                    </div>
+                    <div class="table-def">
+                        <div class="table-name">Orders</div>
+                        <ul class="column-list">
+                            <li>OrderID (PK)</li>
+                            <li>CustomerID (FK)</li>
+                            <li>OrderDate</li>
+                        </ul>
+                    </div>
+                    <div class="table-def">
+                        <div class="table-name">OrderDetails</div>
+                        <ul class="column-list">
+                            <li>OrderDetailID (PK)</li>
+                            <li>OrderID (FK)</li>
+                            <li>Quantity</li>
+                            <li>UnitPrice</li>
+                        </ul>
+                    </div>
+                     <div class="table-def">
+                        <div class="table-name">Products</div>
+                        <ul class="column-list">
+                            <li>ProductID (PK)</li>
+                            <li>ProductName</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <span class="editor-hint">💡 提示：按 <strong>Ctrl + Space</strong> 可觸發 SQL 語法與欄位自動提示 (Autocomplete)</span>
+                <textarea id="sql-answer-editor" name="sql-answer"></textarea>
+            </div>
+
+            <button type="button" class="submit-btn" onclick="submitQuiz()" id="submitBtn">提交答案</button>
+        </form>
+    </div>
+
+    <div id="loading-message">
+        <p>正在計算成績並上傳中，請稍候...</p>
+        <p style="font-size: 0.9rem; color: #999;">(請勿關閉視窗)</p>
+    </div>
+
+    <div id="result-view">
+        <div class="success-icon">✓</div>
+        <h2>提交成功！</h2>
+        <p id="score-display">成績計算中...</p>
+        <p style="margin-top:20px; font-size: 0.9rem;">您的作答紀錄已上傳至系統。<br>您可以關閉此視窗。</p>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/sql-hint.min.js"></script>
+
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwy7NSKf_yQQtZfvGYd4IpAVMoXKybPRkpaqUUEpePk8by0EC8G3JeQWTa2W02nY0mGJg/exec'; 
+
+    // 初始化 CodeMirror 編輯器
+    var sqlEditor = CodeMirror.fromTextArea(document.getElementById("sql-answer-editor"), {
+        mode: "text/x-sql",
+        theme: "dracula",
+        lineNumbers: true,
+        indentWithTabs: true,
+        smartIndent: true,
+        matchBrackets: true,
+        extraKeys: {"Ctrl-Space": "autocomplete"},
+        hintOptions: {
+            tables: {
+                // --- 1. 偽裝成 Table 的常用關鍵字 ---
+                "SELECT": [], "FROM": [], "WHERE": [],
+                "INNER JOIN": [], "LEFT JOIN": [], "RIGHT JOIN": [],
+                "GROUP BY": [], "ORDER BY": [], "HAVING": [],
+                "COUNT(*)": [], "SUM()": [], "DISTINCT": [],
+                "TOP": [], "AS": [], "ON": [],
+
+                // --- 2. 真實的資料表結構 ---
+                "Customers": ["CustomerID", "CustomerName", "Email"],
+                "Orders": ["OrderID", "CustomerID", "OrderDate"],
+                "OrderDetails": ["OrderDetailID", "OrderID", "Quantity", "UnitPrice"],
+                "Products": ["ProductID", "ProductName"]
+            }
+        }
+    });
+
+    sqlEditor.setValue("-- 請在此撰寫 SQL\n");
+
+    sqlEditor.on("keyup", function (cm, event) {
+        if (!cm.state.completionActive && event.keyCode > 64 && event.keyCode < 91) {
+            CodeMirror.commands.autocomplete(cm, null, {completeSingle: false});
+        }
+    });
+
+    // 定義選擇題正確答案
+    const correctAnswers = {
+        q1: 'B',  
+        q2: ['A', 'B', 'C', 'D'], 
+        q3: ['A', 'C'], 
+        q4: ['A', 'B', 'C', 'D', 'E'] 
+    };
+
+    function submitQuiz() {
+        const nameInput = document.getElementById('username');
+        const name = nameInput.value.trim();
+        
+        if (!name) {
+            alert('請填寫您的姓名才能提交喔！');
+            nameInput.focus();
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingMsg = document.getElementById('loading-message');
+        const quizContent = document.getElementById('quiz-content'); // 整個表單區域
+        const resultView = document.getElementById('result-view');   // 完成畫面
+        const scoreDisplay = document.getElementById('score-display');
+
+        // 1. UI 切換：隱藏表單，顯示 Loading
+        quizContent.style.display = 'none'; 
+        loadingMsg.style.display = 'block';
+        window.scrollTo(0, 0); // 捲動到最上方
+
+        // 計算分數與收集資料 (邏輯不變)
+        let score = 0;
+        let userAnswersData = {};
+
+        const pointsPerChoice = 20;
+        for (let i = 1; i <= 4; i++) {
+            const qId = 'q' + i;
+            const correctAnswer = correctAnswers[qId];
+            const isMultiSelect = Array.isArray(correctAnswer);
+            let userValue;
+
+            if (isMultiSelect) {
+                const checkedBoxes = document.querySelectorAll(`input[name="${qId}"]:checked`);
+                const userValuesArray = Array.from(checkedBoxes).map(cb => cb.value).sort();
+                userValue = userValuesArray; 
+                if (JSON.stringify(userValuesArray) === JSON.stringify(correctAnswer.sort())) {
+                    score += pointsPerChoice;
+                }
+                if(userValuesArray.length === 0) userValue = "未作答";
+            } else {
+                const selectedOption = document.querySelector(`input[name="${qId}"]:checked`);
+                userValue = selectedOption ? selectedOption.value : "未作答";
+                if (userValue === correctAnswer) {
+                    score += pointsPerChoice;
+                }
+            }
+            userAnswersData[qId] = Array.isArray(userValue) ? userValue.join(',') : userValue;
+        }
+
+        const sqlAnswerRaw = sqlEditor.getValue();
+        userAnswersData['q5'] = sqlAnswerRaw;
+        
+        const sqlAnswerUpper = sqlAnswerRaw.toUpperCase();
+        let sqlScore = 0;
+        const requiredKeywords = ['SELECT', 'FROM', 'JOIN', 'GROUP BY', 'SUM'];
+        let hitCount = 0;
+        requiredKeywords.forEach(keyword => {
+            if (sqlAnswerUpper.includes(keyword)) hitCount++;
+        });
+
+        if (sqlAnswerRaw.length > 20) {
+            if (hitCount >= 5) sqlScore = 20;
+            else if (hitCount >= 3) sqlScore = 10;
+            else sqlScore = 5;
+        }
+        score += sqlScore;
+        const finalScore = Math.round(score);
+
+        const payload = {
+            name: name,
+            score: finalScore,
+            answers: userAnswersData
+        };
+        
+        console.log("提交資料:", payload);
+
+        // 2. 執行上傳
+        if (SCRIPT_URL && SCRIPT_URL.startsWith('https')) {
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' }, // 維持 application/json
+                body: JSON.stringify(payload)
+            }).then(() => {
+                // 3. 上傳成功：隱藏 Loading，顯示完成畫面
+                loadingMsg.style.display = 'none';
+                resultView.style.display = 'block';
+               // scoreDisplay.innerHTML = `${name} 同學，您的電腦評分成績是：<strong>${finalScore} 分</strong><br>(SQL 手寫題由電腦關鍵字初步評分)`;
+                
+            }).catch(err => {
+                console.error('Error:', err);
+                alert('發生錯誤：無法連接到伺服器。');
+                // 發生錯誤時，把表單顯示回來讓使用者重試
+                quizContent.style.display = 'block';
+                loadingMsg.style.display = 'none';
+                submitBtn.disabled = false;
+            });
+        } else {
+            // 本地測試用
+            loadingMsg.style.display = 'none';
+            resultView.style.display = 'block';
+            scoreDisplay.innerHTML = `[本地測試] ${name} 同學，您的成績是：<strong>${finalScore} 分</strong>`;
+        }
+    }
+</script>
+
+</body>
+</html>
